@@ -38,28 +38,27 @@ def getK8sAppOwners(inK8sClusterName = None, inK8sNamespaceName = None):
     theUri = '/api/v1/networkTopology/owners?cluster=%s&namespace=%s&from=%d&to=%d' % (inK8sClusterName, inK8sNamespaceName, start_num, end_num)
     return httpRequest(theUri)
 
-def getIngressInfo(inK8sClusterName = None, inK8sNamespaceName = None):
-    theUri = '/api/v1/networkTopology/ingressSummaries?cluster=%s&namespace=%s&name=%s&kind=Deployment&from=%d&to=%d' % (inK8sClusterName, inK8sNamespaceName, 'foo', start_num, end_num)
+def getIngressInfo(inK8sClusterName = None, inK8sNamespaceName = None, inName = None, inKind = None):
+    theUri = '/api/v1/networkTopology/ingressSummaries?cluster=%s&namespace=%s&name=%s&kind=%s&from=%d&to=%d' % (inK8sClusterName, inK8sNamespaceName, inName, inKind, start_num, end_num)
     return httpRequest(theUri)
 
-def getIngressUnusedInfo(inK8sClusterName = None, inK8sNamespaceName = None):
-    theUri = '/api/v1/networkTopology/ingressUnresolvedIps?cluster=%s&namespace=%s&name=%s&kind=Deployment&from=%d&to=%d' % (inK8sClusterName, inK8sNamespaceName, 'foo', start_num, end_num)
+def getIngressUnusedInfo(inK8sClusterName = None, inK8sNamespaceName = None, inName = None, inKind = None):
+    theUri = '/api/v1/networkTopology/ingressUnresolvedIps?cluster=%s&namespace=%s&name=%s&kind=%s&from=%d&to=%d' % (inK8sClusterName, inK8sNamespaceName, inName, inKind, start_num, end_num)
     return httpRequest(theUri)
 
-def getEgressInfo():
-    return None
+def getEgressInfo(inK8sClusterName = None, inK8sNamespaceName = None, inName = None, inKind = None):
+    theUri = '/api/v1/networkTopology/egressSummaries?cluster=%s&namespace=%s&name=%s&kind=%s&from=%d&to=%d' % (inK8sClusterName, inK8sNamespaceName, inName, inKind, start_num, end_num)
+    return httpRequest(theUri)
 
-def getEgressUnusedInfo():
-    return None
+def getEgressUnusedInfo(inK8sClusterName = None, inK8sNamespaceName = None, inName = None, inKind = None):
+    theUri = '/api/v1/networkTopology/egressUnresolvedIps?cluster=%s&namespace=%s&name=%s&kind=%s&from=%d&to=%d' % (inK8sClusterName, inK8sNamespaceName, inName, inKind, start_num, end_num)
+    return httpRequest(theUri)
 
 k8s_clusters = getK8sClusters()
-print (k8s_clusters)
 
 for k8s_cluster in k8s_clusters:
     if k8s_cluster == '(not provided)' or k8s_cluster != 'demo-kube-aws':
         continue
-
-    print(k8s_cluster)
 
     temp_h = {}
     if not k8s_cluster in temp_h:
@@ -67,7 +66,6 @@ for k8s_cluster in k8s_clusters:
 
     # Collect namespaces
     k8s_namespaces = getK8sNamespaces(k8s_cluster)
-    #print(k8s_namespaces)
 
     for k8s_namespace in k8s_namespaces:
         if k8s_namespace['name'] != 'example-java-app':
@@ -75,8 +73,21 @@ for k8s_cluster in k8s_clusters:
 
         print(k8s_namespace['name'])
         temp_h[k8s_cluster][k8s_namespace['name']] = {}
-        print(getK8sAppOwners(k8s_cluster, k8s_namespace['name']))
-#        print(getIngressInfo(k8s_cluster, k8s_namespace['name']))
-#        print(getIngressUnusedInfo(k8s_cluster, k8s_namespace['name']))
+        k8s_app_owners = getK8sAppOwners(k8s_cluster, k8s_namespace['name'])
+
+        for k8s_app_owner in k8s_app_owners:
+            ingress_data = getIngressInfo(k8s_cluster, k8s_namespace['name'], k8s_app_owner['name'], k8s_app_owner['kind'])
+            if len(ingress_data['connections']) > 0:
+                print("ingress ---> ", ingress_data)
+
+            print("ingress unused ---> ", getIngressUnusedInfo(k8s_cluster, k8s_namespace['name'], k8s_app_owner['name'], k8s_app_owner['kind']))
+            print("\n\n")
+
+            egress_data = getEgressInfo(k8s_cluster, k8s_namespace['name'], k8s_app_owner['name'], k8s_app_owner['kind'])
+            if len(egress_data['connections']) > 0:
+                print("ingress ---> ", egress_data)
+
+            print("egress unused ---> ", getEgressUnusedInfo(k8s_cluster, k8s_namespace['name'], k8s_app_owner['name'], k8s_app_owner['kind']))
+            print("\n\n\n\n")
 
     print(temp_h)
