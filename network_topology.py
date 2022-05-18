@@ -73,6 +73,7 @@ for k8s_cluster in k8s_clusters:
 
         print(k8s_namespace['name'])
         temp_h[k8s_cluster][k8s_namespace['name']] = {}
+
         k8s_app_owners = getK8sAppOwners(k8s_cluster, k8s_namespace['name'])
 
         for k8s_app_owner in k8s_app_owners:
@@ -81,18 +82,25 @@ ingress --->  {'connections': [{'clientOwner': {'name': 'example-java-app-javaap
             """
             ingress_data = getIngressInfo(k8s_cluster, k8s_namespace['name'], k8s_app_owner['name'], k8s_app_owner['kind'])
             if len(ingress_data['connections']) > 0:
+                if not 'ingress' in temp_h[k8s_cluster][k8s_namespace['name']]:
+                    temp_h[k8s_cluster][k8s_namespace['name']]['ingress'] = []
+
                 print("ingress ---> ", ingress_data)
                 for ig_conn in ingress_data['connections']:
-                    print(ig_conn['clientOwner']['name'])
-                    print(ig_conn['serverProcess'])
-                    print(ig_conn['serverPort'])
-
+                    th = { "owner": ig_conn['clientOwner']['name'], "serverProcess": ig_conn['serverProcess'], "serverPort": ig_conn['serverPort'], "used": True }
+                    temp_h[k8s_cluster][k8s_namespace['name']]['ingress'].append(th)
                 """
 ingress unused --->  {'clusterSubnetsComplete': True, 'unresolveds': [{'clientIPMetadata': {'origin': 'external,external,external', 'ip': '100.127.107.174,100.127.107.174,100.127.107.174'}, 'serverProcess': 'java,kube-dns,dnsmasq', 'serverPort': {'port': 9042, 'protocol': 'TCP'}, 'alias': '', 'rowId': 'iu_external_100.127.107.174_9042'}, {'clientIPMetadata': {'origin': 'external,external', 'ip': '100.127.148.222,100.127.148.222'}, 'serverProcess': 'java,kube-dns', 'serverPort': {'port': 9042, 'protocol': 'TCP'}, 'alias': '', 'rowId': 'iu_external_100.127.148.222_9042'}]}
                 """
             ingress_unused_data = getIngressUnusedInfo(k8s_cluster, k8s_namespace['name'], k8s_app_owner['name'], k8s_app_owner['kind'])
             if len(ingress_unused_data['unresolveds']) > 0:
-              print("ingress unused ---> ", ingress_unused_data)
+                if not 'ingress' in temp_h[k8s_cluster][k8s_namespace['name']]:
+                    temp_h[k8s_cluster][k8s_namespace['name']]['ingress'] = []
+
+                print("ingress unused ---> ", ingress_unused_data)
+                for ig_conn in ingress_unused_data['unresolveds']:
+                    th = { "origin": ig_conn['clientIPMetadata']['origin'], "ip": ig_conn['clientIPMetadata']['ip'], "serverProcess": ig_conn['serverProcess'], "serverPort": ig_conn['serverPort'], "used": False }
+                    temp_h[k8s_cluster][k8s_namespace['name']]['ingress'].append(th)
 
             print("\n\n")
 
@@ -102,19 +110,27 @@ ingress --->  {'connections': [{'serverOwner': {'name': 'example-java-app-javaap
             """
             egress_data = getEgressInfo(k8s_cluster, k8s_namespace['name'], k8s_app_owner['name'], k8s_app_owner['kind'])
             if len(egress_data['connections']) > 0:
-                print("egress ---> ", egress_data)
+                if not 'egress' in temp_h[k8s_cluster][k8s_namespace['name']]:
+                    temp_h[k8s_cluster][k8s_namespace['name']]['egress'] = []
 
+                print("egress ---> ", egress_data)
                 for eg_conn in egress_data['connections']:
-                    print(eg_conn['serverOwner']['name'])
-                    print(eg_conn['clientProcess'])
-                    print(eg_conn['serverPort'])
+                    th = { "owner": eg_conn['serverOwner']['name'], "clientProcess": eg_conn['clientProcess'], "serverPort": eg_conn['serverPort'], "used": True }
+                    temp_h[k8s_cluster][k8s_namespace['name']]['egress'].append(th)
 
                 """
 egress unused --->  {'clusterSubnetsComplete': True, 'unresolveds': [{'serverIPMetadata': {'origin': 'external,external,external,external,external,external,external,external,external,external,external,external,external,external,external,external', 'ip': '52.216.142.166,52.216.143.166,52.216.144.245,52.216.147.13,52.216.177.117,52.216.225.115,52.216.242.14,52.216.248.190,52.216.26.174,52.217.16.198,52.217.163.0,52.217.166.144,52.217.171.80,52.217.202.144,52.217.80.238,54.231.134.8'}, 'clientProcess': 'stress,stress,stress,stress,stress,stress,stress,stress,stress,stress,stress,stress,stress,stress,stress,stress', 'serverPort': {'port': 80, 'protocol': 'TCP'}, 'alias': 'AWS', 'rowId': 'eu_external_AWS_80'}]}
                 """
             egress_unused_data = getEgressUnusedInfo(k8s_cluster, k8s_namespace['name'], k8s_app_owner['name'], k8s_app_owner['kind'])
             if len(egress_unused_data['unresolveds']) > 0:
+                if not 'egress' in temp_h[k8s_cluster][k8s_namespace['name']]:
+                    temp_h[k8s_cluster][k8s_namespace['name']]['egress'] = []
+
                 print("egress unused ---> ", egress_unused_data)
+                for eg_conn in egress_unused_data['unresolveds']:
+                    print("EHHHH ", eg_conn)
+                    th = { "origin": eg_conn['serverIPMetadata']['origin'], "ip": eg_conn['serverIPMetadata']['ip'], "clientProcess": eg_conn['clientProcess'], "serverPort": eg_conn['serverPort'], "used": False }
+                    temp_h[k8s_cluster][k8s_namespace['name']]['egress'].append(th)
             print("\n\n\n\n")
 
     print(temp_h)
