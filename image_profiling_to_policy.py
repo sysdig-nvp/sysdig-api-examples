@@ -29,12 +29,12 @@ def httpRequest(inUri = None):
     indata = data.decode("utf-8").strip()
     return json.loads(indata)
 
-def getImageProfileGroups():
+def getImageProfileGroupIds():
     theUri = '/api/v1/profiling/profileGroups'
 
     return httpRequest(theUri)
 
-def getImageProfileIdsByGroup(jsonIn = None):
+def getImageProfileIdsByGroupId(jsonIn = None):
     image_profile_group_ids = []
 
     if 'ProfileGroups' in jsonIn:
@@ -42,31 +42,48 @@ def getImageProfileIdsByGroup(jsonIn = None):
             image_profile_group_ids.append(profile_group['id'])
     return image_profile_group_ids
 
-def getImageProfilesById(inId = []):
+def getImageProfilesByGroupId(inId = []):
     image_uris_by_id = []
 
     for image_profile_id in inId:
         theUri = urllib.parse.quote("/api/v1/profiling/profileGroups/%s/profiles" % image_profile_id)
-        print("uggg ", theUri)
         image_uris_by_id.append(theUri)
     return image_uris_by_id
 
-def fooblah(inUris = []):
+def getImageProfiles(inUris = []):
     for inUri in inUris:
-       print("fooblah ", inUri)
-       print("uhhh ", httpRequest(inUri))
+       return httpRequest(inUri)
 
+def getImageProfileByProfileId(inProfile = {}):
+    inUri = "/api/v1/profiling/profiles/%s" % inProfile['profileId']
 
-image_profiles = getImageProfileGroups()
+    #
+    # Don't attempt to create policy for any image that we are
+    # still learning about
+    #
+    if inProfile['status'] != 'LEARNING':
+#        print(inProfile)
+#        print(inUri)
+#        print("\n")
+        return httpRequest(inUri)
+    return None
 
-image_profile_group_ids = getImageProfileIdsByGroup(image_profiles)
-print(image_profile_group_ids)
+image_profile_group_ids = getImageProfileGroupIds()
+image_profile_group_ids = getImageProfileIdsByGroupId(image_profile_group_ids)
 
 """
 {'name': 'UDP OUT Ports', 'ruleName': 'UDP OUT Ports - gcr.io/stackdriver-agents/metadata-agent-go:1.2.0@73dadc1c6bf4d57dc428933e7effc4049b17687b830cc2bb134fd12661afc003', 'ruleType': 'NETWORK', 'score': 0}], 'score': 0}, 'containerImagesProposal': {'subcategories': [{'name': 'Containers detected', 'ruleName': 'Containers detected - gcr.io/stackdriver-agents/metadata-agent-go:1.2.0@73dadc1c6bf4d57dc428933e7effc4049b17687b830cc2bb134fd12661afc003', 'ruleType': 'CONTAINER', 'score': 0}], 'score': 0}, 'status': 'LEARNING', 'score': 0}]}
 """
-blahblah = getImageProfilesById(image_profile_group_ids)
-fooblah(blahblah)
+image_profiles_by_group_id = getImageProfilesByGroupId(image_profile_group_ids)
+all_image_profiles = getImageProfiles(image_profiles_by_group_id)
+
+# dict_keys(['offset', 'limit', 'canLoadMore', 'profiles'])
+#print(all_image_profiles.keys())
+
+for image_profile in all_image_profiles['profiles']:
+    generated_image_profile = getImageProfileByProfileId(image_profile)
+    if generated_image_profile != None:
+        print(generated_image_profile)
 
 #print(topology_map)
 #pp = pprint.PrettyPrinter(indent=4)
