@@ -1,0 +1,16 @@
+{
+  "name": "Disallowed Container Activity II",
+  "type": "falco",
+  "description": "Identified container activity outside of an explicitly allowed set",
+  "severity": 3,
+  "enabled": true,
+  "notificationChannelIds": [],
+  "actions": [],
+  "scope": null,
+  "ruleNames": [
+    "Launch Disallowed Container"
+  ],
+  "alertVersion": 1,
+  "origin": "Sysdig",
+  "teamId": 10003978
+}
