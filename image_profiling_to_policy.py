@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import sys, time
+import sys, time, re
 import http.client
 import urllib
 import json
@@ -61,7 +61,8 @@ def getImageProfileByProfileId(inProfile = {}):
     # Don't attempt to create policy for any image that we are
     # still learning about
     #
-    if inProfile['status'] != 'LEARNING':
+    if inProfile['status'] != 'LEARNING' and re.search('sysdig/agent', inProfile['imageName']):
+#        print(inProfile['imageName'])
 #        print(inProfile)
 #        print(inUri)
 #        print("\n")
@@ -84,6 +85,10 @@ for image_profile in all_image_profiles['profiles']:
     generated_image_profile = getImageProfileByProfileId(image_profile)
     if generated_image_profile != None:
         print(generated_image_profile)
+        #print("keys ", generated_image_profile.keys())
+        print("START\n")
+        print("yeah, I got the falco rules ", generated_image_profile['proposedRules'])
+        print("END\n")
 
 #print(topology_map)
 #pp = pprint.PrettyPrinter(indent=4)
