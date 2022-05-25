@@ -7,6 +7,7 @@ import json
 import pprint
 
 from sysdig_cfg import *
+from sdcclient import SdSecureClient
 
 DEBUG = 0
 
@@ -28,6 +29,9 @@ def httpRequest(inUri = None):
 
     indata = data.decode("utf-8").strip()
     return json.loads(indata)
+
+def initSysdigSecureClient():
+    return SdSecureClient(sysdig_api_token, 'https://' + sysdig_host)
 
 def getImageProfileGroupIds():
     theUri = '/api/v1/profiling/profileGroups'
@@ -61,7 +65,7 @@ def getImageProfileByProfileId(inProfile = {}):
     # Don't attempt to create policy for any image that we are
     # still learning about
     #
-    if inProfile['status'] != 'LEARNING' and re.search('sysdig/agent', inProfile['imageName']):
+    if inProfile['status'] != 'LEARNING' and re.search('coredns', inProfile['imageName']):
 #        print(inProfile['imageName'])
 #        print(inProfile)
 #        print(inUri)
@@ -84,11 +88,20 @@ all_image_profiles = getImageProfiles(image_profiles_by_group_id)
 for image_profile in all_image_profiles['profiles']:
     generated_image_profile = getImageProfileByProfileId(image_profile)
     if generated_image_profile != None:
-        print(generated_image_profile)
+        #print(generated_image_profile)
         #print("keys ", generated_image_profile.keys())
         print("START\n")
         print("yeah, I got the falco rules ", generated_image_profile['proposedRules'])
+        print("\n")
+        for rule in generated_image_profile['proposedRules']:
+            if rule['details']['ruleType'] in ['NETWORK', 'PROCESS']:
+                print("  rule name %s: " % rule['name'])
+                print("    ---> rule details %s: " % rule['details'])
+                print("    ---> rule details (JSON) %s: " % json.dumps(rule['details'], indent = 4))
+                print("\n")
         print("END\n")
+
+print(initSysdigSecureClient())
 
 #print(topology_map)
 #pp = pprint.PrettyPrinter(indent=4)
