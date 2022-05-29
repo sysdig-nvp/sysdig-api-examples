@@ -3,11 +3,14 @@
 # Get a specific policy
 #
 
-import json
+import os
 import sys
+import json
+
+sys.path.append(['../', '.', '../API', './API'])
+from sysdig_cfg import *
 
 from sdcclient import SdSecureClient
-from sysdig_cfg import *
 
 def usage():
     print(('usage: %s <policy name>' % sys.argv[0]))
