@@ -1,1 +1,4 @@
 sysdig_cfg.py
+.DS_Store
+__pycache__/
+swag_src.py*
