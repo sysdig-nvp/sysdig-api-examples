@@ -4,6 +4,7 @@ import sys, time, re
 import http.client
 import urllib
 import json
+import yaml
 import pprint
 
 from sysdig_cfg import *
@@ -73,6 +74,17 @@ def getImageProfileByProfileId(inProfile = {}):
         return httpRequest(inUri)
     return None
 
+def createSysdigPolicyFromProposed(inPayLoad = {}):
+    lconn = http.client.HTTPSConnection(sysdig_host)
+
+    lconn.request("POST", "/api/v2/policies/batch", inPayLoad, {"Authorization": auth_header, "Content-Type": content_type_header})
+
+    res = lconn.getresponse()
+    data = res.read()
+
+    indata = data.decode("utf-8").strip()
+    return indata
+
 image_profile_group_ids = getImageProfileGroupIds()
 image_profile_group_ids = getImageProfileIdsByGroupId(image_profile_group_ids)
 
@@ -97,11 +109,18 @@ for image_profile in all_image_profiles['profiles']:
             if rule['details']['ruleType'] in ['NETWORK', 'PROCESS']:
                 print("  rule name %s: " % rule['name'])
                 print("    ---> rule details %s: " % rule['details'])
-                print("    ---> rule details (JSON) %s: " % json.dumps(rule['details'], indent = 4))
+                #print("    ---> rule details (JSON) %s: " % json.dumps(rule['details'], indent = 4))
+                # Falco rules are imported in YAML format
+                print("    ---> rule details (YAML) %s: " % yaml.dump(rule['details'], indent = 4))
                 print("\n")
         print("END\n")
 
-print(initSysdigSecureClient())
+        print("\n\n\n")
+        print(generated_image_profile['proposedPolicy'])
+        filtered_rules = list(filter(lambda v: re.search('(TCP|UDP|Process)', v), generated_image_profile['proposedPolicy']['ruleNames']))
+        print(filtered_rules)
+
+#print(initSysdigSecureClient())
 
 #print(topology_map)
 #pp = pprint.PrettyPrinter(indent=4)
